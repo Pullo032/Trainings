@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     model_dir: Path = API_ROOT / "modele_final"
     sentiment_max_input_tokens: int = 256
     sentiment_model_dir: Path = API_ROOT.parents[1] / "Models-copy" / "camembert-sentiment" / "modele_final"
+    ner_max_input_tokens: int = 256
+    ner_model_dir: Path = API_ROOT.parents[1] / "Models-copy" / "modele_camembert_ner"
 
 
 @lru_cache

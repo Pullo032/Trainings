@@ -40,6 +40,24 @@ class SentimentResponse(BaseModel):
     metadata: ModelMetadata
 
 
+class NERRequest(BaseModel):
+    input_text: str = Field(..., min_length=1, description="Texte dans lequel détecter les entités")
+
+
+class NEREntity(BaseModel):
+    text: str = Field(..., description="Entité telle qu'elle apparaît dans le texte d'entrée")
+    label: str = Field(..., description="Catégorie : PER, LOC, ORG ou MISC")
+    score: float = Field(..., description="Confiance moyenne du modèle pour les mots de l'entité")
+    start: int = Field(..., description="Index du premier caractère dans input_text (inclus)")
+    end: int = Field(..., description="Index après le dernier caractère dans input_text (exclus)")
+
+
+class NERResponse(BaseModel):
+    input_text: str
+    entities: list[NEREntity]
+    metadata: ModelMetadata
+
+
 class HealthResponse(BaseModel):
     status: str
     model_path: str

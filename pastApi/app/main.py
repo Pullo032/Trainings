@@ -4,8 +4,11 @@ from fastapi import FastAPI, HTTPException
 
 from .config import get_settings
 from .model_service import ReformulationModelService
+from .ner_service import NERModelService
 from .schemas import (
     HealthResponse,
+    NERRequest,
+    NERResponse,
     ReformulationRequest,
     ReformulationResponse,
     SentimentRequest,
@@ -26,6 +29,10 @@ async def lifespan(app: FastAPI):
     if not sentiment_model_path.exists():
         raise RuntimeError(f"Le dossier modèle de sentiment n'existe pas: {sentiment_model_path}")
 
+    ner_model_path = settings.ner_model_dir.resolve()
+    if not ner_model_path.exists():
+        raise RuntimeError(f"Le dossier modèle NER n'existe pas: {ner_model_path}")
+
     app.state.model_service = ReformulationModelService(
         model_path=model_path,
         max_input_tokens=settings.max_input_tokens,
@@ -33,6 +40,10 @@ async def lifespan(app: FastAPI):
     app.state.sentiment_service = SentimentModelService(
         model_path=sentiment_model_path,
         max_input_tokens=settings.sentiment_max_input_tokens,
+    )
+    app.state.ner_service = NERModelService(
+        model_path=ner_model_path,
+        max_input_tokens=settings.ner_max_input_tokens,
     )
     yield
 
@@ -87,3 +98,15 @@ def sentiment(payload: SentimentRequest) -> SentimentResponse:
         raise HTTPException(status_code=500, detail=f"Erreur d'analyse de sentiment: {error}") from error
 
     return SentimentResponse(input_text=payload.input_text, **result)
+
+
+@app.post("/ner", response_model=NERResponse)
+def ner(payload: NERRequest) -> NERResponse:
+    service: NERModelService = app.state.ner_service
+
+    try:
+        result = service.predict(input_text=payload.input_text)
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=f"Erreur de reconnaissance d'entités: {error}") from error
+
+    return NERResponse(input_text=payload.input_text, **result)
